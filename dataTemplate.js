@@ -60,15 +60,18 @@ let renderFile = (k, d, t, dataall) => {
       }
 
       fs.stat(_path, (errPath, stats)=>{
-        if(errPath){
-          fs.mkdirSync(_path, { recursive: true });
-        }
 
         // 非公開ファイルを削除
         if(item.published !== true){
-          fs.unlink(`${_path}${_name}`, function(){});
-          console.log(`[data] delete file ${_path}${_name}`);
+          if(fs.existsSync(`${_path}${_name}`)) {
+            fs.unlink(`${_path}${_name}`, function(){});
+            console.log(`[data] delete file ${_path}${_name}`);
+          }
           return false;
+        } else {
+          if(errPath){
+            fs.mkdirSync(_path, { recursive: true });
+          }
         }
 
         ejs.renderFile(_base, {...dataall, ...item} , {}, function(errEjs, resultEjs){
@@ -78,7 +81,7 @@ let renderFile = (k, d, t, dataall) => {
 
           if(!fs.existsSync(`${_path}${_name}`)) {
             fs.writeFileSync(`${_path}${_name}`, '');
-            console.log(`create file ${_path}${_name}`);
+            console.log(`[data] create file ${_path}${_name}`);
           }
 
           fs.readFile(`${_path}${_name}`, 'utf8', function (errRead, strRead) {
