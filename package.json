@@ -1,0 +1,19 @@
+{
+  "name": "@yama-dev/data-template",
+  "version": "0.1.0",
+  "description": "Create content from a template file.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "build": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "@yama-dev",
+  "license": "MIT",
+  "devDependencies": {
+    "nodemon": "^2.0.6"
+  },
+  "dependencies": {
+    "ejs": "^3.1.5"
+  }
+}
