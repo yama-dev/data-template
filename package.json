@@ -1,12 +1,12 @@
 {
   "name": "@yama-dev/data-template",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Create content from a template file.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "build": "nodemon index.js",
-    "test": "mocha"
+    "start": "npm install && npm run build",
+    "build": "nodemon index.js --exec 'npm test'",
+    "test": "mocha test"
   },
   "keywords": [],
   "author": "@yama-dev",
