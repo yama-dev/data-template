@@ -64,7 +64,7 @@ let renderFile = (k, d, t, dataall) => {
         // 非公開ファイルを削除
         if(item.published !== true){
           if(fs.existsSync(`${_path}${_name}`)) {
-            fs.unlink(`${_path}${_name}`, function(){});
+          fs.unlinkSync(`${_path}${_name}`);
             console.log(`[data] delete file ${_path}${_name}`);
           }
           return false;
