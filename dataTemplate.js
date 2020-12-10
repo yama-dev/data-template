@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const ejs = require('ejs');
 
-const dataTemplate = options => {
+const dataTemplate = async (options,cd) => {
   const _options = {
     dataall: {},
     data: {}, // 対象のデータ
@@ -35,71 +35,107 @@ const dataTemplate = options => {
 
     // 該当するテンプレートがあった場合は出力
     if(_template){
-      renderFile(key, options.data[key], _template, options.dataall);
+      await renderFile({
+        key: key,
+        data: options.data[key],
+        templ: _template,
+        dataall: options.dataall
+      })
     }
   }
+
+  if(cd) cd();
 };
 
-let renderFile = (k, d, t, dataall) => {
+let renderFile = ({key, data, templ, dataall}) => {
 
-  d.map(item => {
-    if(t.detail){
-      let _base = t.detail.base;
-      let _path = t.detail.path;
-      let _name = t.detail.name;
+  data.map( item => {
+    if(templ.detail){
+      let _base = templ.detail.base;
+      let _path = templ.detail.path;
+      let _name = templ.detail.name;
 
       if(item.slug){
-        _path = t.detail.path.replace(/\[slug\]/g, item.slug);
-        _name = t.detail.name.replace(/\[slug\]/g, item.slug);
+        _path = templ.detail.path.replace(/\[slug\]/g, item.slug);
+        _name = templ.detail.name.replace(/\[slug\]/g, item.slug);
       } else {
         item.slug = '';
       }
 
-      if(!fs.existsSync(_base)){
-        console.log(`not templatee base file. ${_base}`);
-      }
-
-      fs.stat(_path, (errPath, stats)=>{
-
-        // 非公開ファイルを削除
-        if(item.published !== true){
-          if(fs.existsSync(`${_path}${_name}`)) {
+      // 非公開ファイルを削除
+      if(item.published !== true){
+        if(fs.existsSync(`${_path}${_name}`)) {
           fs.unlinkSync(`${_path}${_name}`);
-            console.log(`[data] delete file ${_path}${_name}`);
-          }
-          return false;
+          console.log(`[data] delete file ${_path}${_name}`);
+        }
+        return false;
+      }
+    }
+  });
+
+  return new Promise((resolve, reject) => {
+
+    const datafix = data.filter(_d => _d.published === true);
+    let renderCount = 0;
+
+    datafix.map( item => {
+      if(templ.detail){
+        let _base = templ.detail.base;
+        let _path = templ.detail.path;
+        let _name = templ.detail.name;
+
+        if(item.slug){
+          _path = templ.detail.path.replace(/\[slug\]/g, item.slug);
+          _name = templ.detail.name.replace(/\[slug\]/g, item.slug);
         } else {
+          item.slug = '';
+        }
+
+        if(!fs.existsSync(_base)){
+          console.log(`not templatee base file. ${_base}`);
+        }
+
+        fs.stat(_path, (errPath, stats)=>{
+
+          // フォルダが無い場合は作成
           if(errPath){
             fs.mkdirSync(_path, { recursive: true });
           }
-        }
 
-        ejs.renderFile(_base, {...dataall, ...item} , {}, function(errEjs, resultEjs){
-          if (errEjs) {
-            return console.log(errEjs);
-          }
-
-          if(!fs.existsSync(`${_path}${_name}`)) {
-            fs.writeFileSync(`${_path}${_name}`, '');
-            console.log(`[data] create file ${_path}${_name}`);
-          }
-
-          fs.readFile(`${_path}${_name}`, 'utf8', function (errRead, strRead) {
-            if (errRead) {
-              return console.log(errRead);
+          ejs.renderFile(_base, {...dataall, ...item} , {}, function(errEjs, resultEjs){
+            if (errEjs) {
+              return console.log(errEjs);
             }
 
-            // ファイルの中身に変更のあった場合のみ更新
-            if(resultEjs !== strRead){
-              fs.writeFileSync(`${_path}${_name}`, resultEjs);
-              console.log(`[data] render file ${_path}${_name}`);
+            if(!fs.existsSync(`${_path}${_name}`)) {
+              fs.writeFileSync(`${_path}${_name}`, '');
+              console.log(`[data] create file ${_path}${_name}`);
             }
+
+            fs.readFile(`${_path}${_name}`, 'utf8', function (errRead, strRead) {
+              if (errRead) {
+                return console.log(errRead);
+              }
+
+              // ファイルの中身に変更のあった場合のみ更新
+              if(resultEjs !== strRead){
+                fs.writeFileSync(`${_path}${_name}`, resultEjs);
+                console.log(`[data] render file ${_path}${_name}`);
+
+                renderCount++;
+                // Promise
+                if(datafix.length === renderCount){
+                  resolve();
+                }
+              }
+            });
+
           });
-
         });
-      });
-    }
+      }
+    });
   });
+
 };
 
 module.exports = dataTemplate;
