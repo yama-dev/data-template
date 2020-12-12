@@ -1,6 +1,6 @@
 const assert = require('assert');
 
-const fs = require('fs-extra')
+const fs = require('fs-extra');
 const { execSync } = require('child_process');
 const dataTemplate = require('../dataTemplate.js');
 
