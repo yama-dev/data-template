@@ -2,16 +2,20 @@ const fs = require('fs');
 const path = require('path');
 const ejs = require('ejs');
 
-const dataTemplate = async (options,cd) => {
-  const _options = {
-    dataall: {},
-    data: {}, // 対象のデータ
-    template: [] // テンプレートのデータ
-  };
+let options;
+const options_default = {
+  dataall: {},
+  data: {}, // 対象のデータ
+  template: [], // テンプレートのデータ
+  logLevel: 'info',
+  logPrefix: 'data-template'
+};
+
+const dataTemplate = async (_options,cd) => {
 
   options = {
-    ..._options,
-    ...options
+    ...options_default,
+    ..._options
   };
 
   if( !Array.isArray(options.template) ){
@@ -79,6 +83,8 @@ let renderEjsFile = ({templateejs, pathejs, dataejs, callback}) => {
 
 let renderFile = ({key, data, templ, dataall}) => {
 
+  let renderCount = 0;
+
   data.map( item => {
     if(templ.detail){
       let _base = templ.detail.base;
@@ -96,18 +102,16 @@ let renderFile = ({key, data, templ, dataall}) => {
       if(item.published !== true){
         if(fs.existsSync(`${_path}${_name}`)) {
           fs.unlinkSync(`${_path}${_name}`);
-          console.log(`[data] delete file ${_path}${_name}`);
+          if(options.logLevel === 'info') console.log(`[${options.logPrefix}] delete file ${_path}${_name}`);
         }
         return false;
       }
     }
   });
 
+  const datafix = data.filter(_d => _d.published === true);
+
   return new Promise((resolve, reject) => {
-
-    const datafix = data.filter(_d => _d.published === true);
-    let renderCount = 0;
-
     datafix.map( item => {
       if(templ.detail){
         let _base = templ.detail.base;
@@ -132,34 +136,19 @@ let renderFile = ({key, data, templ, dataall}) => {
             fs.mkdirSync(_path, { recursive: true });
           }
 
-          ejs.renderFile(_base, {...dataall, ...item} , {}, function(errEjs, resultEjs){
-            if (errEjs) {
-              return console.log(errEjs);
+          let detectRenderFinish = ()=>{
+            renderCount++;
+            // Promise
+            if(datafix.length === renderCount){
+              resolve();
             }
+          };
 
-            if(!fs.existsSync(`${_path}${_name}`)) {
-              fs.writeFileSync(`${_path}${_name}`, '');
-              console.log(`[data] create file ${_path}${_name}`);
-            }
-
-            fs.readFile(`${_path}${_name}`, 'utf8', function (errRead, strRead) {
-              if (errRead) {
-                return console.log(errRead);
-              }
-
-              // ファイルの中身に変更のあった場合のみ更新
-              if(resultEjs !== strRead){
-                fs.writeFileSync(`${_path}${_name}`, resultEjs);
-                console.log(`[data] render file ${_path}${_name}`);
-
-                renderCount++;
-                // Promise
-                if(datafix.length === renderCount){
-                  resolve();
-                }
-              }
-            });
-
+          renderEjsFile({
+            templateejs: _base,
+            pathejs: `${_path}${_name}`,
+            dataejs: {...dataall, ...item},
+            callback: detectRenderFinish
           });
         });
       }
