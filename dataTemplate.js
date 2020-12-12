@@ -47,6 +47,36 @@ const dataTemplate = async (options,cd) => {
   if(cd) cd();
 };
 
+let renderEjsFile = ({templateejs, pathejs, dataejs, callback}) => {
+  ejs.renderFile(templateejs, dataejs , {}, function(errEjs, resultEjs){
+    if (errEjs) {
+      reject();
+      return console.log(errEjs);
+    }
+
+    if(!fs.existsSync(pathejs)) {
+      fs.writeFileSync(pathejs, '');
+      if(options.logLevel === 'info') console.log(`[${options.logPrefix}] create file ${pathejs}`);
+    }
+
+    fs.readFile(pathejs, 'utf8', function (errRead, strRead) {
+      if (errRead) {
+        return console.log(errRead);
+      }
+
+      // ファイルの中身に変更のあった場合のみ更新
+      if(resultEjs !== strRead){
+        fs.writeFileSync(pathejs, resultEjs);
+        if(options.logLevel === 'info') console.log(`[${options.logPrefix}] render file ${pathejs}`);
+        callback();
+      } else {
+        callback();
+      }
+    });
+
+  });
+};
+
 let renderFile = ({key, data, templ, dataall}) => {
 
   data.map( item => {
