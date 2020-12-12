@@ -93,6 +93,19 @@ describe('Run function', function() {
     }
   });
   it('run dataTemplate()', function(done) {
+    options.logPrefix = 'test';
+    // options.logLevel = '';
+    try {
+      dataTemplate(options, function(){
+        done();
+      });
+    } catch (e) {
+      throw e;
+    }
+  });
+  it('rerun dataTemplate()', function(done) {
+    options.logPrefix = 'test';
+    // options.logLevel = '';
     try {
       dataTemplate(options, function(){
         done();
