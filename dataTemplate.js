@@ -39,12 +39,13 @@ const dataTemplate = async (_options,cd) => {
 
     // 該当するテンプレートがあった場合は出力
     if(_template){
-      await renderFile({
+      // Detail.
+      await renderFileDetail({
         key: key,
         data: options.data[key],
         templ: _template,
         dataall: options.dataall
-      })
+      });
     }
   }
 
@@ -54,7 +55,6 @@ const dataTemplate = async (_options,cd) => {
 let renderEjsFile = ({templateejs, pathejs, dataejs, callback}) => {
   ejs.renderFile(templateejs, dataejs , {}, function(errEjs, resultEjs){
     if (errEjs) {
-      reject();
       return console.log(errEjs);
     }
 
@@ -81,7 +81,7 @@ let renderEjsFile = ({templateejs, pathejs, dataejs, callback}) => {
   });
 };
 
-let renderFile = ({key, data, templ, dataall}) => {
+let renderFileDetail = ({key, data, templ, dataall}) => {
 
   let renderCount = 0;
 
@@ -112,6 +112,17 @@ let renderFile = ({key, data, templ, dataall}) => {
   const datafix = data.filter(_d => _d.published === true);
 
   return new Promise((resolve, reject) => {
+
+    if(!datafix.length){
+      if(options.logLevel === 'info') console.log(`[${options.logPrefix}] not publish data.`);
+      resolve('not publish data.');
+    }
+
+    if(!templ.detail){
+      resolve('not template data.');
+      return false;
+    }
+
     datafix.map( item => {
       if(templ.detail){
         let _base = templ.detail.base;
@@ -126,7 +137,9 @@ let renderFile = ({key, data, templ, dataall}) => {
         }
 
         if(!fs.existsSync(_base)){
-          console.log(`not templatee base file. ${_base}`);
+          let _log_text = `not templatee base file. ${_base}`
+          console.log(_log_text);
+          reject(_log_text);
         }
 
         fs.stat(_path, (errPath, stats)=>{
