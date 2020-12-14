@@ -46,6 +46,13 @@ const dataTemplate = async (_options,cd) => {
         templ: _template,
         dataall: options.dataall
       });
+      // List
+      await renderFileList({
+        key: key,
+        data: options.data[key],
+        templ: _template,
+        dataall: options.dataall
+      });
     }
   }
 
@@ -166,6 +173,79 @@ let renderFileDetail = ({key, data, templ, dataall}) => {
         });
       }
     });
+  });
+
+};
+
+let renderFileList = ({key, data, templ, dataall}) => {
+
+  let renderCount = 0;
+
+  const datafix = data.filter(_d => _d.published === true);
+
+  return new Promise((resolve, reject) => {
+
+    if(!datafix.length){
+      if(options.logLevel === 'info') console.log(`[${options.logPrefix}] not publish data.`);
+      resolve('not publish data.');
+      return false;
+    }
+
+    if(!templ.list){
+      resolve('not template data.');
+      return false;
+    }
+
+    let postsPerPage = templ.posts_per_page > 0 ? templ.posts_per_page : 9999;
+    let pageCount = Math.ceil(datafix.length / postsPerPage);
+
+    for (let _i = 0; _i < pageCount; _i++) {
+      let _min = _i * postsPerPage;
+      let _max = _i * postsPerPage + postsPerPage;
+      let _data = datafix.filter((item,index) => {
+        if(_min <= index && _max > index) return item;
+      });
+
+      if(templ.list){
+        let _base = templ.list.base;
+        let _path = templ.list.path;
+        let _name = templ.list.name;
+
+        if(key){
+          _path = templ.list.path.replace(/\[slug\]/g, key);
+          _name = templ.list.name.replace(/\[slug\]/g, key);
+        }
+
+        if(!fs.existsSync(_base)){
+          let _log_text = `not templatee base file. ${_base}`
+          console.log(_log_text);
+          reject(_log_text);
+        }
+
+        fs.stat(_path, (errPath, stats)=>{
+
+          // フォルダが無い場合は作成
+          if(errPath){
+            fs.mkdirSync(_path, { recursive: true });
+          }
+
+          let detectRenderFinish = ()=>{
+            renderCount++;
+            // Promise
+            if(pageCount === renderCount){
+              resolve();
+            }
+          };
+
+          renderEjsFile({
+            templateejs: _base,
+            pathejs: `${_path}${_name}`,
+            dataejs: { ...dataall, page: _data },
+            callback: detectRenderFinish
+          });
+        });
+      }
+    }
   });
 
 };
