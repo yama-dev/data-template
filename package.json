@@ -8,7 +8,12 @@
     "build": "nodemon index.js --exec 'npm test'",
     "test": "mocha test"
   },
-  "keywords": ["ejs","template","date","blog"],
+  "keywords": [
+    "ejs",
+    "template",
+    "date",
+    "blog"
+  ],
   "author": "@yama-dev",
   "license": "MIT",
   "devDependencies": {
