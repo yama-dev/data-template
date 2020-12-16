@@ -1,6 +1,6 @@
 {
   "name": "@yama-dev/data-template",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "Create content from a template file.",
   "main": "index.js",
   "scripts": {
