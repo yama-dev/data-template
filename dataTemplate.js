@@ -91,6 +91,8 @@ let renderEjsFile = ({templateejs, pathejs, dataejs, callback}) => {
 let renderFileDetail = ({key, data, templ, dataall}) => {
 
   let renderCount = 0;
+  let datafix = [];
+  let hierarchy = '';
 
   data.map( item => {
     if(templ.detail){
@@ -116,7 +118,25 @@ let renderFileDetail = ({key, data, templ, dataall}) => {
     }
   });
 
-  const datafix = data.filter(_d => _d.published === true);
+  // check data target hierarchy.
+  if(typeof templ.detail.data === 'object' && templ.detail.data.length){
+    hierarchy = templ.detail.data;
+    data.map(_data => {
+      let _d = _data;
+      hierarchy.map((item,index) => {
+        if(_d[item]){
+          _d = _d[item];
+        } else {
+          if(options.logLevel === 'info') console.log(`[${options.logPrefix}] undefined data - ${item}`);
+        }
+      });
+      if(typeof _d === 'object' && _d.length){
+        datafix = [...datafix,..._d];
+      }
+    });
+  } else {
+    datafix = data.filter(_d => _d.published === true);
+  }
 
   return new Promise((resolve, reject) => {
 
