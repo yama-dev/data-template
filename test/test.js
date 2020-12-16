@@ -159,7 +159,8 @@ describe('Run function', function() {
     console.log('---------------------');
     console.log('compile \n' + stdout_read + '\n');
     console.log('dist \n' + stdout_dist);
-    console.log('template \n' + stdout_template);
+    // console.log('template \n' + stdout_template);
+    console.log('---------------------');
     done();
   });
 });
